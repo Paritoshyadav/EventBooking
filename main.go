@@ -1,12 +1,24 @@
 package main
 
 import (
-	"github.com/eventbooking/lib/persistence/mongolayer"
+	"flag"
+	"fmt"
+	"log"
+
+	"github.com/eventbooking/lib/configuration"
+	"github.com/eventbooking/lib/persistence/dblayer"
+	"github.com/eventbooking/rest"
 )
 
 func main() {
 
-	db := mongolayer.InitMongoLayer("mongodb://localhost:27017/")
-	defer db.Close()
-
+	conf_path := flag.String("conf", `lib\configuration\config.json`, "flag to set the path to the configuration json file")
+	flag.Parse()
+	config, _ := configuration.ExtractConfiguration(*conf_path)
+	fmt.Println("Connecting to database")
+	dbhanlder, err := dblayer.NewPersistenceLayer(config.Databasetype, config.DBConnection)
+	if err != nil {
+		fmt.Println(err)
+	}
+	log.Fatal(rest.Server(config.RestfulEndpoint, dbhanlder))
 }
