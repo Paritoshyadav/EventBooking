@@ -16,39 +16,37 @@ type MongoLayer struct {
 	client *mongo.Client
 }
 
-func InitMongoLayer(connection string) (*MongoLayer, error) {
+func InitMongoLayer(connection string) (*MongoLayer, error, func()) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connection))
 	if err != nil {
-		return nil, err
+		return nil, err, nil
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, err, nil
 	}
 
 	fmt.Println("Connected")
 
 	mongoLayer := &MongoLayer{client: client}
+	Close := func() {
+		defer func() {
 
-	return mongoLayer, nil
+			if err := mongoLayer.client.Disconnect(context.TODO()); err != nil {
 
-}
+				panic(err)
 
-func (ml *MongoLayer) Close(ctx context.Context, cancel context.CancelFunc) {
+			}
+			fmt.Println("Connection Closed")
 
-	defer func() {
+		}()
 
-		if err := ml.client.Disconnect(ctx); err != nil {
+	}
 
-			panic(err)
-
-		}
-		fmt.Println("Connection Closed")
-
-	}()
+	return mongoLayer, nil, Close
 
 }
 
@@ -89,6 +87,12 @@ func (ml *MongoLayer) Close(ctx context.Context, cancel context.CancelFunc) {
 // }
 
 func (ml *MongoLayer) AddEvent(e persistence.Event) (interface{}, error) {
+	if !primitive.IsValidObjectID(e.ID.String()) {
+		e.ID = primitive.NewObjectID()
+	}
+	if !primitive.IsValidObjectID(e.Location.ID.String()) {
+		e.Location.ID = primitive.NewObjectID()
+	}
 
 	result, err := ml.client.Database(DB).Collection(EVENTS).InsertOne(context.TODO(), e)
 

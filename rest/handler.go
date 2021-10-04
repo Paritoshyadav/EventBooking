@@ -62,6 +62,7 @@ func (eh *EventServiceHandle) findEventHandler(rw http.ResponseWriter, r *http.R
 }
 func (eh *EventServiceHandle) allEventHandler(rw http.ResponseWriter, r *http.Request) {
 	events, err := eh.dbhandler.FindAllAvailableEvents()
+	fmt.Printf("%v", events)
 	if err != nil {
 		rw.WriteHeader(400)
 		fmt.Fprintf(rw, "error occur while searching %s", err)
@@ -77,6 +78,7 @@ func (eh *EventServiceHandle) allEventHandler(rw http.ResponseWriter, r *http.Re
 func (eh *EventServiceHandle) newEventHandler(rw http.ResponseWriter, r *http.Request) {
 	var event persistence.Event
 	err := json.NewDecoder(r.Body).Decode(&event)
+	fmt.Println(event)
 	if err != nil {
 		rw.WriteHeader(400)
 		fmt.Fprintf(rw, "{error: Error occured while trying decode events from JSON request %s}", err)

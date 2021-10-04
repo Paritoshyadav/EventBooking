@@ -16,7 +16,8 @@ func main() {
 	flag.Parse()
 	config, _ := configuration.ExtractConfiguration(*conf_path)
 	fmt.Println("Connecting to database")
-	dbhanlder, err := dblayer.NewPersistenceLayer(config.Databasetype, config.DBConnection)
+	dbhanlder, err, close := dblayer.NewPersistenceLayer(config.Databasetype, config.DBConnection)
+	defer close()
 	if err != nil {
 		fmt.Println(err)
 	}
